@@ -9,6 +9,9 @@ namespace App\Providers;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
+use App\Repositories\PlayerRepository;
+use App\Services\PlayerService;
+use App\Services\TeamService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,7 +22,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(PlayerRepository::class);
+
+        $this->app->singleton(PlayerService::class, function ($app) {
+            return new PlayerService($app->make(PlayerRepository::class));
+        });
+
+        $this->app->singleton(TeamService::class, function ($app) {
+            return new TeamService($app->make(PlayerRepository::class));
+        });
     }
 
     /**

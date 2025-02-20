@@ -7,22 +7,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Player;
-use App\Enums\PlayerPosition;
-use App\Enums\PlayerSkill;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Services\PlayerService;
+use App\Exceptions\PlayerNotFoundException;
 use App\Http\Resources\PlayerResource;
 use App\Http\Requests\PlayerRequest;
-
+use Illuminate\Support\Facades\Log;
 class PlayerController extends Controller
 {
+    public function __construct(
+        private PlayerService $playerService
+    ) {}
+
     public function index()
     {
         try {
-            $players = Player::with('skills')->get();
+            $players = $this->playerService->getAllPlayers();
             return PlayerResource::collection($players);
         } catch (\Exception $e) {
+            Log::error('Failed to list players', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Failed to list players'
             ], 500);
@@ -31,93 +33,25 @@ class PlayerController extends Controller
 
     public function show($id)
     {
-        try {
-            $player = Player::findOrFail($id);
-            return new PlayerResource($player);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Player not found'
-            ], 404);
-        }
+        $player = $this->playerService->findPlayerOrFail($id);
+        return new PlayerResource($player);
     }
 
     public function store(PlayerRequest $request)
     {
-        try {
-            DB::beginTransaction();
-
-            $player = Player::create([
-                'name' => $request->name,
-                'position' => $request->position
-            ]);
-
-            foreach ($request->playerSkills as $skill) {
-                $player->skills()->create([
-                    'skill' => $skill['skill'],
-                    'value' => $skill['value']
-                ]);
-            }
-
-            DB::commit();
-
-            return new PlayerResource($player->fresh());
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Failed to create player'
-            ], 500);
-        }
+        $player = $this->playerService->createPlayer($request->validated());
+        return new PlayerResource($player);
     }
 
     public function update(PlayerRequest $request, $id)
     {
-        try {
-            DB::beginTransaction();
-
-            $player = Player::findOrFail($id);
-
-            $player->update([
-                'name' => $request->name,
-                'position' => $request->position
-            ]);
-
-            $player->skills()->delete();
-
-            foreach ($request->playerSkills as $skill) {
-                $player->skills()->create([
-                    'skill' => $skill['skill'],
-                    'value' => $skill['value']
-                ]);
-            }
-
-            DB::commit();
-
-            return new PlayerResource($player->fresh());
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Failed to update player'
-            ], 500);
-        }
+        $player = $this->playerService->updatePlayer($id, $request->validated());
+        return new PlayerResource($player);
     }
 
     public function destroy($id)
     {
-        try {
-            DB::beginTransaction();
-
-            $player = Player::findOrFail($id);
-            $player->skills()->delete();
-            $player->delete();
-
-            DB::commit();
-
-            return response()->json(null, 204);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Failed to delete player'
-            ], 500);
-        }
+        $this->playerService->deletePlayer($id);
+        return response()->json(null, 204);
     }
 }
