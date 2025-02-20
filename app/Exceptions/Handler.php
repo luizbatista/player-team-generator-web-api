@@ -21,6 +21,7 @@ class Handler extends ExceptionHandler
      */
     protected $dontReport = [
         PlayerNotFoundException::class,
+        ProcessTeamSelectionException::class
     ];
 
     /**
@@ -45,13 +46,13 @@ class Handler extends ExceptionHandler
             if ($e instanceof PlayerNotFoundException) {
                 return new JsonResponse([
                     'message' => $e->getMessage()
-                ], $e->getCode());
+                ], $e->getCode() ?: 404);
             }
 
             if ($e instanceof ProcessTeamSelectionException) {
                 return new JsonResponse([
                     'message' => $e->getMessage()
-                ], $e->getCode());
+                ], $e->getCode() ?: 500);
             }
 
             return new JsonResponse([

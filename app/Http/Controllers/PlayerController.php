@@ -20,15 +20,8 @@ class PlayerController extends Controller
 
     public function index()
     {
-        try {
-            $players = $this->playerService->getAllPlayers();
-            return PlayerResource::collection($players);
-        } catch (\Exception $e) {
-            Log::error('Failed to list players', ['error' => $e->getMessage()]);
-            return response()->json([
-                'message' => 'Failed to list players'
-            ], 500);
-        }
+        $players = $this->playerService->getAllPlayers();
+        return PlayerResource::collection($players);
     }
 
     public function show($id)

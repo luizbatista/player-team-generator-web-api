@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Repositories\PlayerRepository;
 use Illuminate\Support\Collection;
 use App\Exceptions\ProcessTeamSelectionException;
-use Illuminate\Support\Facades\Log;
 
 class TeamService
 {
@@ -15,9 +14,8 @@ class TeamService
 
     public function processTeamSelection(array $data): Collection
     {
-        try {
-            $selectedPlayers = collect();
-            $usedPlayerIds = [];
+        $selectedPlayers = collect();
+        $usedPlayerIds = [];
 
         foreach ($data['requirements'] as $requirement) {
             $players = $this->playerRepository
@@ -39,13 +37,17 @@ class TeamService
                 $players = $players->concat($playersWithAnySkill);
             }
 
-            $usedPlayerIds = array_merge($usedPlayerIds, $players->pluck('id')->toArray());
-                $selectedPlayers = $selectedPlayers->concat($players);
+            if ($players->count() < $requirement['numberOfPlayers']) {
+                throw new ProcessTeamSelectionException(
+                    "Insufficient number of players for position: {$requirement['position']}",
+                    422
+                );
             }
 
-            return $selectedPlayers;
-        } catch (\Exception $e) {
-            throw new ProcessTeamSelectionException();
+            $usedPlayerIds = array_merge($usedPlayerIds, $players->pluck('id')->toArray());
+            $selectedPlayers = $selectedPlayers->concat($players);
         }
+
+        return $selectedPlayers;
     }
 }
