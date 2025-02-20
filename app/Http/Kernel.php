@@ -1,7 +1,7 @@
 <?php
 
 // /////////////////////////////////////////////////////////////////////////////
-// PLEASE DO NOT RENAME OR REMOVE ANY OF THE CODE BELOW. 
+// PLEASE DO NOT RENAME OR REMOVE ANY OF THE CODE BELOW.
 // YOU CAN ADD YOUR CODE TO THIS FILE TO EXTEND THE FEATURES TO USE THEM IN YOUR WORK.
 // /////////////////////////////////////////////////////////////////////////////
 
@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'api.token' => \App\Http\Middleware\ValidateAPIToken::class,
     ];
 }
